@@ -2,6 +2,8 @@
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -34,8 +36,9 @@ var FormsApp = function (_React$Component) {
 
     _createClass(FormsApp, [{
         key: "onSubmitClick",
-        value: function onSubmitClick() {
-            alert("Submit Clicked");
+        value: function onSubmitClick(model) {
+            alert(JSON.stringify(model));
+            console.log(model);
         }
     }, {
         key: "render",
@@ -45,6 +48,7 @@ var FormsApp = function (_React$Component) {
                 null,
                 React.createElement(Header, {
                     title: this.state.title,
+                    model: [{ key: "name", label: "Name", required: true, field: "input" }, { key: "dob", label: "DOB", required: true, type: "date", field: "input" }, { key: "gender", label: "Gender", field: "select", options: ['', 'male', 'female'] }],
                     onSubmitClick: this.onSubmitClick
                 })
             );
@@ -63,6 +67,8 @@ var Header = function (_React$Component2) {
         var _this2 = _possibleConstructorReturn(this, (Header.__proto__ || Object.getPrototypeOf(Header)).call(this, props));
 
         _this2.onSubClick = _this2.onSubClick.bind(_this2);
+        _this2.onChange = _this2.onChange.bind(_this2);
+        _this2.state = {};
         return _this2;
     }
 
@@ -74,11 +80,33 @@ var Header = function (_React$Component2) {
         value: function onSubClick(event) {
             // preventing default action
             event.preventDefault();
-            this.props.onSubmitClick();
+            if (this.isAboveEighteen(this.state.dob)) {
+                this.props.onSubmitClick(this.state);
+            } else {
+                alert("Age must be above 18");
+            }
+        }
+
+        // On change update the initial state
+
+    }, {
+        key: "onChange",
+        value: function onChange(e, key) {
+            this.setState(_defineProperty({}, key, this[key].value));
+        }
+    }, {
+        key: "isAboveEighteen",
+        value: function isAboveEighteen(date) {
+            // Changed date from from 2000-11-11 to 2000,11,11
+            var seconds = Date.now() - new Date(date.replace(/-/g, ","));
+            var ageDate = new Date(seconds);
+            return Math.abs(ageDate.getUTCFullYear() - 1970) >= 18 ? true : false;
         }
     }, {
         key: "render",
         value: function render() {
+            var _this3 = this;
+
             return React.createElement(
                 "div",
                 null,
@@ -90,12 +118,51 @@ var Header = function (_React$Component2) {
                 React.createElement(
                     "form",
                     { onSubmit: this.onSubClick },
-                    React.createElement(
-                        "label",
-                        { htmlFor: "name" },
-                        "Name"
-                    ),
-                    React.createElement("input", { id: "name" }),
+                    this.props.model.map(function (item) {
+                        return React.createElement(
+                            "div",
+                            { key: item.key },
+                            React.createElement(
+                                "label",
+                                {
+                                    key: "l" + item.key,
+                                    htmlFor: item.key
+                                },
+                                item.label
+                            ),
+                            item.field === "input" && React.createElement("input", {
+                                key: "i" + item.key,
+                                ref: function ref(key) {
+                                    _this3[item.key] = key;
+                                },
+                                id: item.key,
+                                type: item.type || "text",
+                                required: item.required || false,
+                                onChange: function onChange(e) {
+                                    _this3.onChange(e, item.key);
+                                }
+                            }),
+                            item.field === "select" && React.createElement(
+                                "select",
+                                {
+                                    key: "s" + item.key,
+                                    ref: function ref(key) {
+                                        _this3[item.key] = key;
+                                    },
+                                    onChange: function onChange(e) {
+                                        _this3.onChange(e, item.key);
+                                    }
+                                },
+                                item.options.map(function (option) {
+                                    return React.createElement(
+                                        "option",
+                                        { key: option + item.key, value: option },
+                                        option
+                                    );
+                                })
+                            )
+                        );
+                    }),
                     React.createElement(
                         "button",
                         null,
